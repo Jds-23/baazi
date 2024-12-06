@@ -7,9 +7,8 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Pausable.sol";
 
 contract Baazi is ReentrancyGuard, Ownable, Pausable {
-    IERC20 public immutable token;
-
     struct Poll {
+        IERC20 token;
         address creator;
         string question;
         uint256 totalStake;
@@ -46,21 +45,20 @@ contract Baazi is ReentrancyGuard, Ownable, Pausable {
         uint256 amount
     );
 
-    constructor(address _token) Ownable(msg.sender) {
-        token = IERC20(_token);
-    }
+    constructor() Ownable(msg.sender) {}
 
     function createPoll(
         string memory _question,
         uint256 _duration,
-        uint256 _initialStake
+        uint256 _initialStake,
+        IERC20 token
     ) external whenNotPaused nonReentrant returns (uint256) {
         require(_duration > 0, "Duration must be positive");
         require(_initialStake > 0, "Initial stake required");
 
         uint256 pollId = nextPollId++;
         Poll storage poll = polls[pollId];
-
+        poll.token = token;
         poll.creator = msg.sender;
         poll.question = _question;
         poll.endTime = block.timestamp + _duration;
@@ -88,7 +86,7 @@ contract Baazi is ReentrancyGuard, Ownable, Pausable {
         require(_amount > 0, "Amount must be positive");
 
         require(
-            token.transferFrom(msg.sender, address(this), _amount),
+            poll.token.transferFrom(msg.sender, address(this), _amount),
             "Stake transfer failed"
         );
 
@@ -129,7 +127,10 @@ contract Baazi is ReentrancyGuard, Ownable, Pausable {
 
         poll.hasClaimedReward[msg.sender] = true;
 
-        require(token.transfer(msg.sender, reward), "Reward transfer failed");
+        require(
+            poll.token.transfer(msg.sender, reward),
+            "Reward transfer failed"
+        );
 
         emit RewardClaimed(_pollId, msg.sender, reward);
     }

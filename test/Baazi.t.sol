@@ -17,7 +17,7 @@ contract BaaziTest is Test {
     function setUp() public {
         vm.startPrank(user);
         token = new Token("Test Token");
-        baazi = new Baazi(address(token));
+        baazi = new Baazi();
         token.transfer(souyma, token.balanceOf(user) / 3);
         token.transfer(prodipto, token.balanceOf(user) / 3);
         vm.stopPrank();
@@ -27,7 +27,7 @@ contract BaaziTest is Test {
         amount = bound(amount, 1, token.balanceOf(user));
         vm.startPrank(user);
         token.approve(address(baazi), amount);
-        baazi.createPoll("Will the price of ETH go up?", 1 days, amount);
+        baazi.createPoll("Will the price of ETH go up?", 1 days, amount, token);
         vm.stopPrank();
         (
             address creator,
@@ -133,7 +133,7 @@ contract BaaziTest is Test {
     function create_a_poll(uint256 amount) public {
         vm.startPrank(user);
         token.approve(address(baazi), amount);
-        baazi.createPoll("Will the price of ETH go up?", 1 days, amount);
+        baazi.createPoll("Will the price of ETH go up?", 1 days, amount, token);
         vm.stopPrank();
     }
 
